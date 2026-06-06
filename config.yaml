@@ -3,7 +3,9 @@ model:
   provider: deepseek
   base_url: https://api.deepseek.com/v1
 providers: {}
-fallback_providers: '[{"provider": "lmstudio", "model": "gemma-4-12b"}]'
+fallback_providers:
+- provider: lmstudio
+  model: gemma-4-12b
 credential_pool_strategies: {}
 toolsets:
 - hermes-cli
@@ -262,7 +264,7 @@ privacy:
 tts:
   provider: edge
   edge:
-    voice: en-US-AriaNeural
+    voice: zh-CN-XiaoxiaoNeural
   elevenlabs:
     voice_id: pNInz6obpgDQGcFmaJgB
     model_id: eleven_multilingual_v2
@@ -477,7 +479,9 @@ sessions:
   min_interval_hours: 24
   write_json_snapshots: false
 onboarding:
-  seen: {}
+  seen:
+    tool_progress_prompt: true
+    busy_input_prompt: true
 updates:
   pre_update_backup: false
   backup_keep: 5
