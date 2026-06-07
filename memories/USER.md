@@ -13,7 +13,8 @@ Hermes-Agent 项目在 /Users/jushuai/My_Project/hermes_agent/Hermes-Agent
 已经安装的第三方 skills: gstack (garrytan/gstack, 手动绕过安全检查), skill-creator (openai/skills hub), hermes-agent-self-evolution (Python 项目+手动创建 SKILL.md), macos-computer-use (built-in)。
 GitHub 备份仓库 arlenju/hermes_backup 已设置每日 00:00 cron 自动备份。gh CLI 已安装并登录。
 §
-沟通风格：非常直接、务实，喜欢简短直给的答案。不喜欢绕弯子、过度解释或铺垫。问1+1等于几时就只说等于2，不用展开。
+沟通风格：非常直接、务实，喜欢简短直给的答案。不喜欢绕弯子、过度解释或铺垫。
+语音模式下（/voice on），只输出TTS语音回复，不要显示MEDIA文件路径或任何文字内容。纯语音，零文字。
 §
 TTS 声音用 zh-CN-XiaoxiaoNeural（小晓），用户明确表示很喜欢这个声音。
 实用主义风格 — 功能搞不定时接受能用的替代方案，不纠结完美方案。
