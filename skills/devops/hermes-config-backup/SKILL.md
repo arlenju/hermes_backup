@@ -142,8 +142,42 @@ Hermes scatters durable state across several files. A complete backup needs each
 | `mnemosyne/data/mnemosyne.db` | 1-5M | similar (already compact) | Always include — long-term Mnemosyne memory |
 | `SOUL.md` | <1K | similar | Always include |
 | `plugins/` | varies | varies | Always include |
+| **`skills/`** | **5-50M** (grows with installed skills) | rsync-incremental | **Always include** — agent-created skills live here, easy to lose; exclude `.cache`, `__pycache__`, `node_modules`, `.venv`, `venv` |
+| **`~/Library/LaunchAgents/com.hermes.*.plist`** | <10K each | similar | **Always include** — open-boot service definitions (MLX vision, gateway, etc.); without these, services don't auto-start after a reinstall |
+| **`~/.hermes/scripts/`** | ~50K | similar | **Always include** — backup/health/maintenance scripts the cron jobs invoke |
 | **`state.db`** | **20-100M** (grows over time) | **~23%** of original | **Compress** before commit; see below |
 | `kanban.db` | 100K | ~30K | Optional; small enough to commit raw |
+
+### Including skills/, LaunchAgents/, scripts/
+
+These three were missing from the v1.x minimal script — add them explicitly. They are easy to lose because they live outside the obvious `~/.hermes/` tree (LaunchAgents) or grow silently (skills/).
+
+```bash
+# skills/ — rsync incremental, exclude caches/venvs
+echo "复制 skills..."
+mkdir -p "$REPO_DIR/skills"
+rsync -a --delete \
+  --exclude='.cache' \
+  --exclude='__pycache__' \
+  --exclude='.DS_Store' \
+  --exclude='node_modules' \
+  --exclude='.venv' \
+  --exclude='venv' \
+  "$HERMES_DIR/skills/" "$REPO_DIR/skills/" 2>/dev/null || echo "skills 复制失败"
+
+# LaunchAgents — open-boot services (MLX vision, gateway, etc.)
+echo "复制 LaunchAgents plist..."
+mkdir -p "$REPO_DIR/LaunchAgents"
+cp "$HOME/Library/LaunchAgents/com.hermes."*.plist "$REPO_DIR/LaunchAgents/" 2>/dev/null \
+  || echo "无 com.hermes.* plist"
+
+# scripts/ — backup/health/maintenance scripts
+echo "复制 scripts..."
+mkdir -p "$REPO_DIR/scripts"
+cp "$HERMES_DIR/scripts/"*.sh "$HERMES_DIR/scripts/"*.py "$REPO_DIR/scripts/" 2>/dev/null || true
+```
+
+Verified on 2026-06-24: adding these to `hermes_backup.sh` produced a 640-file / +159K-line commit that finally captured all agent-generated skills + the freshly installed `com.hermes.mlx-vision.plist`.
 
 ### state.db (sessions database) — compress it
 

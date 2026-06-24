@@ -316,13 +316,13 @@
     "created_at": "2026-06-20T23:15:31.669668+00:00",
     "created_by": "agent",
     "last_patched_at": null,
-    "last_used_at": null,
-    "last_viewed_at": null,
+    "last_used_at": "2026-06-24T09:41:22.663070+00:00",
+    "last_viewed_at": "2026-06-24T09:41:22.661277+00:00",
     "patch_count": 0,
     "pinned": false,
     "state": "active",
-    "use_count": 0,
-    "view_count": 0
+    "use_count": 1,
+    "view_count": 1
   },
   "evaluating-llms-harness": {
     "archived_at": null,
@@ -493,19 +493,6 @@
     "use_count": 1,
     "view_count": 1
   },
-  "gstack": {
-    "archived_at": null,
-    "created_at": "2026-06-06T03:29:35.296381+00:00",
-    "created_by": null,
-    "last_patched_at": null,
-    "last_used_at": "2026-06-06T03:29:35.297212+00:00",
-    "last_viewed_at": "2026-06-06T03:29:35.296399+00:00",
-    "patch_count": 0,
-    "pinned": false,
-    "state": "active",
-    "use_count": 1,
-    "view_count": 1
-  },
   "heartmula": {
     "archived_at": null,
     "created_at": "2026-06-13T03:15:14.015940+00:00",
@@ -562,14 +549,14 @@
     "archived_at": null,
     "created_at": "2026-06-06T04:05:57.655584+00:00",
     "created_by": "agent",
-    "last_patched_at": "2026-06-18T01:47:35.619682+00:00",
-    "last_used_at": "2026-06-20T00:41:56.785688+00:00",
-    "last_viewed_at": "2026-06-20T00:41:56.783748+00:00",
-    "patch_count": 25,
+    "last_patched_at": "2026-06-24T08:08:42.050036+00:00",
+    "last_used_at": "2026-06-24T08:06:16.450736+00:00",
+    "last_viewed_at": "2026-06-24T08:06:16.447182+00:00",
+    "patch_count": 27,
     "pinned": false,
     "state": "active",
-    "use_count": 36,
-    "view_count": 36
+    "use_count": 37,
+    "view_count": 37
   },
   "hermes-fallback-setup": {
     "archived_at": null,
@@ -666,14 +653,14 @@
     "archived_at": null,
     "created_at": "2026-06-24T07:54:04.230478+00:00",
     "created_by": null,
-    "last_patched_at": "2026-06-24T07:54:04.230519+00:00",
-    "last_used_at": null,
-    "last_viewed_at": null,
-    "patch_count": 1,
+    "last_patched_at": "2026-06-24T08:08:12.599950+00:00",
+    "last_used_at": "2026-06-24T09:42:53.636872+00:00",
+    "last_viewed_at": "2026-06-24T09:42:53.634937+00:00",
+    "patch_count": 3,
     "pinned": false,
     "state": "active",
-    "use_count": 0,
-    "view_count": 0
+    "use_count": 3,
+    "view_count": 3
   },
   "json-canvas": {
     "archived_at": null,
