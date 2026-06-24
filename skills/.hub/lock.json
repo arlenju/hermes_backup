@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "installed": {
+    "skill-creator": {
+      "source": "skills.sh",
+      "identifier": "skills-sh/openai/skills/skill-creator",
+      "trust_level": "trusted",
+      "scan_verdict": "caution",
+      "content_hash": "sha256:a48051de52836dc3",
+      "install_path": "skill-creator",
+      "files": [
+        "LICENSE.txt",
+        "SKILL.md",
+        "agents/openai.yaml",
+        "references/openai_yaml.md",
+        "scripts/generate_openai_yaml.py",
+        "scripts/init_skill.py",
+        "scripts/quick_validate.py"
+      ],
+      "metadata": {
+        "detail_url": "https://skills.sh/openai/skills/skill-creator",
+        "repo_url": "https://github.com/openai/skills"
+      },
+      "installed_at": "2026-06-06T03:47:22.037629+00:00",
+      "updated_at": "2026-06-06T03:47:22.037633+00:00"
+    },
+    "caveman": {
+      "source": "clawhub",
+      "identifier": "caveman",
+      "trust_level": "community",
+      "scan_verdict": "caution",
+      "content_hash": "sha256:80cd9351d65b3860",
+      "install_path": "caveman",
+      "files": [
+        "benchmarks/prompts.json",
+        "benchmarks/requirements.txt",
+        "benchmarks/run.py",
+        "caveman/SKILL.md",
+        "CONTRIBUTING.md",
+        "plugins/caveman/skills/caveman/SKILL.md",
+        "README.md",
+        "skill-card.md",
+        "SKILL.md",
+        "skills/caveman/SKILL.md",
+        "_meta.json"
+      ],
+      "metadata": {},
+      "installed_at": "2026-06-06T06:38:26.919961+00:00",
+      "updated_at": "2026-06-06T06:38:26.919966+00:00"
+    },
+    "superpowers": {
+      "source": "clawhub",
+      "identifier": "superpowers",
+      "trust_level": "community",
+      "scan_verdict": "safe",
+      "content_hash": "sha256:7e0c85a8675439bc",
+      "install_path": "superpowers",
+      "files": [
+        "references/brainstorming.md",
+        "references/finishing-branch.md",
+        "references/subagent-development.md",
+        "references/systematic-debugging.md",
+        "references/tdd.md",
+        "references/writing-plans.md",
+        "skill-card.md",
+        "SKILL.md",
+        "_meta.json"
+      ],
+      "metadata": {},
+      "installed_at": "2026-06-06T06:39:25.987981+00:00",
+      "updated_at": "2026-06-06T06:39:25.987985+00:00"
+    }
+  }
+}

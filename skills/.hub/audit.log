@@ -1,0 +1,6 @@
+2026-06-06T03:28:25Z BLOCKED gstack clawhub:community dangerous 79_findings
+2026-06-06T03:47:22Z INSTALL skill-creator skills.sh:trusted caution sha256:a48051de52836dc3
+2026-06-06T03:47:35Z BLOCKED skill-installer skills.sh:trusted dangerous 3_findings
+2026-06-06T06:38:17Z BLOCKED caveman clawhub:community caution 2_findings
+2026-06-06T06:38:26Z INSTALL caveman clawhub:community caution sha256:80cd9351d65b3860
+2026-06-06T06:39:25Z INSTALL superpowers clawhub:community safe sha256:7e0c85a8675439bc

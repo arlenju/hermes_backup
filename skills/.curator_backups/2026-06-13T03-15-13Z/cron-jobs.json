@@ -1,0 +1,217 @@
+{
+  "jobs": [
+    {
+      "id": "ee402d24c4ef",
+      "name": "GitHub \u6bcf\u65e5\u914d\u7f6e\u5907\u4efd",
+      "prompt": "\u6267\u884c\u914d\u7f6e\u5907\u4efd\u5230 GitHub \u4ed3\u5e93 arlenju/hermes_backup\uff1a\n1. \u8fd0\u884c\u811a\u672c ~/.hermes/scripts/hermes_backup.sh\n2. \u5982\u679c git push \u5931\u8d25\uff08403 \u6743\u9650\u9519\u8bef\uff09\uff0c\u8bb0\u5f55\u4e0b\u6765\u4f46\u4e0d\u8981\u505c\u6b62\n3. \u62a5\u544a\u5907\u4efd\u7ed3\u679c",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "hermes_backup.sh",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 0 * * *",
+        "display": "0 0 * * *"
+      },
+      "schedule_display": "0 0 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 7
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-06T11:21:20.232129+08:00",
+      "next_run_at": "2026-06-14T00:00:00+08:00",
+      "last_run_at": "2026-06-13T00:00:36.393393+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "492bba53cb2c",
+      "name": "Update Skills Inventory",
+      "prompt": "",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "update_skills_inventory.py",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *",
+        "display": "0 3 * * *"
+      },
+      "schedule_display": "0 3 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 8
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-06T23:13:19.309607+08:00",
+      "next_run_at": "2026-06-14T03:00:00+08:00",
+      "last_run_at": "2026-06-13T03:00:20.324149+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": "delivery error: Weixin send failed: iLink sendmessage rate limited; cooldown active for 30.0s",
+      "deliver": "origin",
+      "origin": {
+        "platform": "weixin",
+        "chat_id": "o9cq809t7oibCa6W31PGdnQJOskQ@im.wechat",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": "/Users/jushuai/My_Project/hermes_agent/Hermes-Agent",
+      "profile": null
+    },
+    {
+      "id": "25a20b70c61b",
+      "name": "\u6a21\u578b\u5065\u5eb7\u76d1\u6d4b\uff08\u6bcf\u5c0f\u65f6\uff09",
+      "prompt": "\u8fd0\u884c\u6a21\u578b\u5065\u5eb7\u76d1\u6d4b\u811a\u672c\u5e76\u8f93\u51fa\u6392\u540d\u8868\u683c\uff1a\n1. \u8fd0\u884c ~/.hermes/scripts/model_health.py\n2. \u8bfb\u53d6\u8f93\u51fa\u4e2d\u7684\u6392\u540d\uff0c\u4ee5\u8868\u683c\u5f62\u5f0f\u62a5\u544a\n3. \u5982\u679c\u5065\u5eb7\u6a21\u578b\u5c11\u4e8e3\u4e2a\uff0c\u63d0\u9192\u7528\u6237\u6ce8\u610f",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "model_health.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 * * * *",
+        "display": "0 * * * *"
+      },
+      "schedule_display": "0 * * * *",
+      "repeat": {
+        "times": null,
+        "completed": 138
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-07T09:25:45.144311+08:00",
+      "next_run_at": "2026-06-13T12:00:00+08:00",
+      "last_run_at": "2026-06-13T11:00:35.048098+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": [
+        "terminal"
+      ],
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "2d8c79fe0fa5",
+      "name": "Fallback \u8c03\u4f18\uff08\u6bcf6\u5c0f\u65f6\uff09",
+      "prompt": "\u8fd0\u884c fallback \u8c03\u4f18\u5e76\u66f4\u65b0\u914d\u7f6e\uff1a\n1. \u8fd0\u884c python3 ~/.hermes/scripts/model_health.py reorder\n2. \u8be5\u811a\u672c\u4f1a\u81ea\u52a8\u6d4b\u8bd5\u6240\u6709\u6a21\u578b\u901f\u5ea6\u5e76\u91cd\u65b0\u6392\u5e8f fallback_providers\n3. \u62a5\u544a\u65b0\u7684 fallback \u987a\u5e8f",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "model_health_reorder.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 */6 * * *",
+        "display": "0 */6 * * *"
+      },
+      "schedule_display": "0 */6 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 24
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-07T09:25:46.152173+08:00",
+      "next_run_at": "2026-06-13T12:00:00+08:00",
+      "last_run_at": "2026-06-13T06:01:26.493165+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "3ef9b268d68e",
+      "name": "\u6bcf\u65e5\u5907\u4efd\u72b6\u6001\u7b80\u62a5",
+      "prompt": "\u8bf7\u751f\u6210\u4e00\u4efd\u6bcf\u65e5\u5907\u4efd\u72b6\u6001\u7b80\u62a5\uff0c\u5185\u5bb9\u7b80\u6d01\u3002\n\n\u68c0\u67e5\u4ee5\u4e0b\u6240\u6709 cron \u4efb\u52a1\u7684\u72b6\u6001\uff1a\n1. \u5148\u8c03\u7528 cronjob action=list \u83b7\u53d6\u6240\u6709\u4efb\u52a1\u72b6\u6001\n2. \u91cd\u70b9\u5173\u6ce8\uff1a\n   - GitHub \u6bcf\u65e5\u914d\u7f6e\u5907\u4efd\uff08hermes_backup.sh\uff09\u2014 \u6bcf\u592900:00\u8fd0\u884c\n   - \u6a21\u578b\u5065\u5eb7\u76d1\u63a7 \u2014 \u6bcf\u5c0f\u65f6\u8fd0\u884c\n   - Fallback \u8c03\u4f18 \u2014 \u6bcf6\u5c0f\u65f6\u8fd0\u884c\n   - Skills Inventory \u2014 \u6bcf\u592903:00\u8fd0\u884c\n3. \u5bf9\u6bcf\u4e2a\u4efb\u52a1\u62a5\u544a\uff1a\u540d\u79f0\u3001\u4e0a\u6b21\u8fd0\u884c\u65f6\u95f4\u3001\u72b6\u6001\uff08ok/failed\uff09\u3001\u4e0b\u6b21\u8fd0\u884c\u65f6\u95f4\n4. \u5982\u679c\u6709\u4efb\u4f55\u4efb\u52a1\u5931\u8d25\uff0c\u6807\u8bb0\u7ea2\u8272\u8b66\u544a\n5. \u8f93\u51fa\u683c\u5f0f\uff1a\u6781\u7b80\u8868\u683c\uff0c\u6bcf\u884c\u4e00\u4e2a\u4efb\u52a1\n\n\u6ce8\u610f\uff1a\u4e0d\u8981\u4fee\u6539\u4efb\u4f55\u914d\u7f6e\uff0c\u53ea\u505a\u68c0\u67e5\u548c\u62a5\u544a\u3002",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * *",
+        "display": "0 8 * * *"
+      },
+      "schedule_display": "0 8 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 5
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-11T12:36:47.687565+08:00",
+      "next_run_at": "2026-06-14T08:00:00+08:00",
+      "last_run_at": "2026-06-13T08:21:05.706662+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "weixin",
+        "chat_id": "o9cq809t7oibCa6W31PGdnQJOskQ@im.wechat",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": [
+        "cronjob",
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "profile": null
+    }
+  ],
+  "updated_at": "2026-06-13T11:00:35.048739+08:00"
+}
