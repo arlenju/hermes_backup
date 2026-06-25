@@ -23,6 +23,12 @@ Feishu App (cli_xxx) → tenant_access_token → Sheets API
   └── PUT  /sheets/v2/spreadsheets/{token}/style           → apply cell formatting
 ```
 
+## Feishu IM API (Group Chat, Members & Messages)
+
+For creating group chats, adding members by open_id, and sending
+text/interactive card messages, see `references/feishu-im-api.md`.
+Requires `im:chat`, `im:message`, and `contact:contact:readonly` scopes.
+
 ## Feishu Drive API (File Listing & Download)
 
 ### Required Permissions
@@ -160,6 +166,34 @@ print(f'Sheet has {total_rows} total rows, {rows_with_data} with data')
 ```
 
 This avoids timeouts and unnecessary API costs when the sheet has thousands of empty trailing rows.
+
+#### For wide tables, compute the rightmost column from metadata
+
+Do not assume `A:Z` is the full width. Asset/inventory sheets often have 40–60+ columns; important fields can live after Z. Query sheet metadata first, convert `grid_properties.column_count` to an Excel column label, and read the whole actual width:
+
+```python
+def col_label(n: int) -> str:
+    s = ""
+    while n:
+        n, r = divmod(n - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+sheets = requests.get(
+    f"https://open.feishu.cn/open-apis/sheets/v3/spreadsheets/{sheet_token}/sheets/query",
+    headers=headers, timeout=30,
+).json()["data"]["sheets"]
+info = next(s for s in sheets if s["sheet_id"] == sheet_id)
+row_count = info["grid_properties"]["row_count"]
+right_col = col_label(info["grid_properties"]["column_count"])
+
+r = requests.get(
+    f"https://open.feishu.cn/open-apis/sheets/v2/spreadsheets/{sheet_token}/values/{sheet_id}!A1:{right_col}{row_count}",
+    headers=headers, timeout=90,
+)
+rows = r.json()["data"]["valueRange"].get("values", [])
+# Then trim trailing all-empty rows/columns locally and reconcile totals.
+```
 
 ### ⚠️ Headerless sheets (data starts at row 1, no header row)
 
@@ -628,9 +662,31 @@ folder_url = "https://rbnqidugqp.feishu.cn/drive/folder/LFwbfdgR7lbY0jdGlDXcKsBI
 folder_token = folder_url.split('/folder/')[1]
 ```
 
-## Feishu Drive API
+For Feishu Wiki links and “润色/不要有 AI 味” requests, see `references/feishu-wiki-doc-humanizing.md`: resolve wiki node → docx `obj_token`, prefer `raw_content`, then rewrite in plain internal-business language without AI-sounding transitions.
+
+## Feishu Drive / Wiki / Doc API
 
 For listing folders, downloading files, and exporting documents from Feishu Drive (云盘), see `references/feishu-drive-api.md`. The Drive API requires `drive:drive:readonly` scope (separate from sheets scopes) and often needs admin approval.
+
+For turning a Feishu Docx into a user-friendly PDF guide, see `references/feishu-doc-to-user-guide-pdf.md`: prefer `docx/v1/documents/{token}/raw_content` for text extraction, rewrite into plain-language Markdown, render to PDF, then self-verify the PDF before sending.
+
+### Wiki URL → Docx raw content workflow
+
+When the user shares a Wiki URL like `https://.../wiki/<node_token>`, the URL token is usually a **wiki node token**, not the document token. Resolve it first:
+
+```python
+node = GET /wiki/v2/spaces/get_node?token=<wiki_node_token>
+obj_token = node["data"]["node"]["obj_token"]
+obj_type = node["data"]["node"]["obj_type"]  # commonly "docx"
+```
+
+If `obj_type == "docx"`, read text directly with:
+
+```python
+GET /docx/v1/documents/{obj_token}/raw_content
+```
+
+This often works even when Drive export to Markdown is unsupported. Some tenants reject `drive/v1/export_tasks` with `file_extension=md` and only allow `docx/pdf/xlsx/csv/base/pptx`; in that case, do **not** block — use `raw_content` for text review/润色/summarization tasks. Note that raw content may omit rich tables/images/colored text; if the user needs those sections, use the Docx block API or export to docx/pdf as a follow-up.
 
 ### ⚠️ Error 99991672 — Missing Drive Scope
 
@@ -670,16 +726,20 @@ This skill absorbed `feishu-api` (2026-06-13). The absorbed skill's unique refer
 - **Sheet ID ≠ sheet name.** `Sheet1` is the display name; the API uses IDs like `0fUaAr`. Always get the ID from the sheet list query.
 - **Token expiry is ~2 hours.** For long operations, re-generate the token periodically.
 - **Rate limiting:** Stay under ~5 requests/second. Add `time.sleep(0.3)` between batch writes.
-- ****Regex `\S+` pattern gets corrupted by system secret-censoring when written inline.**** When writing Python code via `write_file` or heredoc that does `re.search(r'FEISHU_APP_SECRET=(\S+)', ...)`, the system intercepts the `(\S+)` pattern and corrupts it to `*** ...`. **Workaround:** assign the regex pattern string to a variable first, then pass the variable to `re.search()`:
+- ****Regex `\S+` patterns near `FEISHU_APP_SECRET` get corrupted by secret-censoring when written inline.**** Do **not** parse `.env` secrets with `re.search(r'FEISHU_APP_SECRET=(\S+)', ...)` in generated scripts; even assigning the regex to `sec_pat` can be mangled in some contexts. Prefer a line-based parser that never embeds a secret-looking regex:
   ```python
-  # ❌ BROKEN — system corrupts the \S+ pattern:
-  app_secret = re.search(r'FEISHU_APP_SECRET=(\S+)', env_content).group(1)
-  
-  # ✅ WORKS — split pattern into a variable first:
-  sec_pat = r'FEISHU_APP_SECRET=(\S+)'
-  app_secret = re.search(sec_pat, env_content).group(1)
+  def load_env_key(name):
+      with open(os.path.expanduser("~/.hermes/.env"), "r", encoding="utf-8") as f:
+          for line in f:
+              line = line.strip()
+              if line.startswith(name + "="):
+                  return line.split("=", 1)[1]
+      raise RuntimeError(f"missing {name}")
+
+  app_id = load_env_key("FEISHU_APP_ID")
+  app_secret = load_env_key("FEISHU_APP_SECRET")
   ```
-  This applies to any regex with `\S+` matching secret-adjacent text. Also affects heredoc (`<< 'PYEOF'`) content — the system scans for credential patterns before writing or executing.
+  This is more robust than heredocs, one-liners, or regex parsing for Feishu credentials.
 - ****Large ranges fail the style API.**** Ranges over ~2000 rows (e.g., `B2:B10344`) fail with code 90202 "validate RangeVal fail". Split into chunks: rows 2-2000, 2002-4000, etc.
 - **Read only the data range, not the full sheet.** A sheet may have 456K+ total rows but only 10K with actual data. Always determine the data range first (e.g., by checking column A for non-empty cells).
 - **Drive API (`drive:drive:readonly`) requires admin approval** in most Feishu tenants — it's not just a scope toggle. Don't assume it's available.

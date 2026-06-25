@@ -1,7 +1,7 @@
 ---
 name: voice-pipeline
 description: "TTS, STT, and voice message pipeline for Hermes — configure Edge TTS voices, install faster-whisper, convert MP3→SILK for WeChat, MP3→Opus for Feishu native voice bubbles"
-version: 1.2.0
+version: 1.3.0
 author: agent
 metadata:
   hermes:
@@ -41,6 +41,23 @@ hermes config check  # Check ✓ marks on stt.* and tts.*
 
 **Edge TTS is the default** — no API key needed, excellent Chinese voice quality.
 
+### TTS Provider Selection Guide
+
+| When to use | Provider | Reason |
+|-------------|----------|--------|
+| **中文为主, 免费, 本地闭环** | `edge` (XiaoxiaoNeural) | Best free Chinese TTS, no API key, works offline after first use |
+| **英文专业播报** | `edge` (Yunyang/any) or `openai` | Either works; Edge is free |
+| **需要定制音色/说话风格** | `elevenlabs` or `openai` | API-based, paid |
+| **全本地化(M5, 无网)** | `edge` first; fallback `neutts` | Edge TTS uses a websocket to bing.com on first call — not truly offline. neutts is fully local but lower quality. |
+
+**Switching the provider:** `hermes config set tts.provider edge` (takes effect on next gateway `/restart` or CLI relaunch).
+
+**Pitfall — default provider is NOT always Edge.** The Hermes default config may set `tts.provider: openai`, which requires `VOICE_TOOLS_OPENAI_KEY` and charges per character. Always check current config:
+```bash
+grep "provider:" ~/.hermes/config.yaml | head -5
+```
+If it says `openai`, switch to `edge` for free Chinese TTS.
+
 ## Edge TTS Chinese Voices
 
 | Voice ID | Name | Style |
@@ -58,22 +75,133 @@ Set voice: `hermes config set tts.edge.voice zh-CN-XiaoxiaoNeural`
 
 Supports voice messages from messaging platforms (Telegram, WeChat, Discord, etc.).
 
-Provider priority (auto-detected):
-1. **Local faster-whisper** — free, no API key: `pip install faster-whisper`
-2. **Groq Whisper** — free tier: set `GROQ_API_KEY`
-3. **OpenAI Whisper** — paid: set `VOICE_TOOLS_OPENAI_KEY`
+### Built-in Providers
+
+Hermes ships with 6 native STT backends:
+
+| Provider | Name | Auth | Quality |
+|----------|------|------|---------|
+| **Local faster-whisper** | `local` | None (free, offline) | Good (base: ~140MB) |
+| **Groq Whisper** | `groq` | `GROQ_API_KEY` | Excellent (free tier) |
+| **OpenAI Whisper** | `openai` | `VOICE_TOOLS_OPENAI_KEY` | Excellent (paid) |
+| **Mistral Voxtral** | `mistral` | `MISTRAL_API_KEY` | Good |
+| **xAI Grok STT** | `xai` | `XAI_API_KEY` | Excellent, 21 languages |
+| **ElevenLabs Scribe** | `elevenlabs` | `ELEVENLABS_API_KEY` | Good, diarization |
 
 Config:
 ```yaml
 stt:
   enabled: true
-  provider: local       # local, groq, openai, mistral
+  provider: local       # local, groq, openai, mistral, xai, elevenlabs
   local:
     model: base         # tiny, base, small, medium, large-v3
     language: ''        # auto-detect if empty
 ```
 
 > **Model size tradeoff:** `base` (~140MB download on first use) balances quality and speed. `small` is more accurate but slower. `tiny` is fastest but less accurate.
+
+### Custom STT: Command-Provider Pattern (Zero Python)
+
+For any CLI-based ASR engine (Qwen3-ASR, whisper.cpp, vosk, etc.), register it as a **command provider** — no plugin, no Python code, no core modifications:
+
+```yaml
+stt:
+  enabled: true
+  provider: qwen3-asr   # your custom name
+
+  # Custom providers (registered under `stt.providers`)
+  providers:
+    qwen3-asr:
+      type: command                    # Hermes runs the CLI, reads stdout
+      command: "/path/to/asr_script.sh {input_path}"
+      timeout: 300                     # seconds (default: 300)
+      format: txt                      # output format (txt/json/srt/vtt; default: txt)
+      language: zh                     # language hint passed to script
+
+  local:
+    model: base                        # kept as fallback
+```
+
+**How it works:**
+1. Hermes receives a voice message, saves to temp file
+2. Replaces `{input_path}` / `{model}` / `{language}` placeholders in the command
+3. Runs the command, waits up to `timeout` seconds
+4. Reads stdout as the transcription result
+
+### Simple Env-Var Escape Hatch
+
+For one-off testing, set `HERMES_LOCAL_STT_COMMAND` and use `local_command` provider:
+
+```bash
+export HERMES_LOCAL_STT_COMMAND='/path/to/asr_script.sh {input_path}'
+hermes config set stt.provider local_command
+```
+
+### Qwen3-ASR Integration (MLX on Apple Silicon)
+
+[Qwen3-ASR](https://huggingface.co/collections/mlx-community/qwen3-asr) by Alibaba is 2026 open-source SOTA ASR — 52 languages, 22 Chinese dialects, 92ms TTFB streaming, excellent code-switching (中英混杂). Works on Apple Silicon via MLX.
+
+**1. Install mlx-audio**
+```bash
+source ~/.hermes/hermes-agent/venv/bin/activate
+pip install mlx-audio
+```
+
+**2. Download model (8-bit, ~1GB)**
+```bash
+hf download mlx-community/Qwen3-ASR-0.6B-8bit \
+  --local-dir ~/.lmstudio/models/mlx-community/Qwen3-ASR-0.6B-8bit
+```
+
+**3. Write wrapper script (`~/.hermes/scripts/mlx_asr.sh`)**
+```bash
+#!/bin/bash
+MODEL_PATH="$HOME/.lmstudio/models/mlx-community/Qwen3-ASR-0.6B-8bit"
+INPUT="$1"
+OUTPUT_DIR=$(mktemp -d)
+OUTPUT_FILE="$OUTPUT_DIR/result.txt"
+source "$HOME/.hermes/hermes-agent/venv/bin/activate"
+python3 -m mlx_audio.stt.generate --model "$MODEL_PATH" --audio "$INPUT" \
+  --output-path "$OUTPUT_FILE" --format txt --language zh 2>/dev/null
+[ -f "$OUTPUT_FILE" ] && cat "$OUTPUT_FILE" || { echo "ERROR"; exit 1; }
+rm -rf "$OUTPUT_DIR"
+```
+```bash
+chmod +x ~/.hermes/scripts/mlx_asr.sh
+```
+
+**4. Register in config.yaml**
+```yaml
+stt:
+  enabled: true
+  provider: qwen3-asr
+  providers:
+    qwen3-asr:
+      type: command
+      command: "~/.hermes/scripts/mlx_asr.sh {input_path}"
+      timeout: 300
+      language: zh
+  local:
+    model: base
+```
+
+**5. Restart gateway** (`hermes gateway restart` or kill+relaunch CLI)
+
+**Fallback:** `hermes config set stt.provider local` to revert to faster-whisper.
+
+**Note:** Qwen3-ASR-0.6B 8-bit uses ~1.1GB RAM on M5. First inference loads model (~5s); subsequent calls are near-instant.
+
+### CLI-Based STT Verification
+
+Test the ASR directly from terminal:
+```bash
+source ~/.hermes/hermes-agent/venv/bin/activate
+python3 -m mlx_audio.stt.generate \
+  --model ~/.lmstudio/models/mlx-community/Qwen3-ASR-0.6B-8bit \
+  --audio /path/to/test.mp3 --output-path /tmp/result.txt \
+  --format txt --language zh
+cat /tmp/result.txt
+```
 
 ## Pitfalls & Workarounds
 
@@ -241,11 +369,10 @@ python3 scripts/mp3_to_feishu_opus.py input.mp3 output.opus
 
 ### Reference
 
-See `references/feishu-voice-bubbles.md` for the full session transcript, debugging steps, and format requirements.
+- `references/feishu-voice-bubbles.md` — full debug transcript for Feishu OGG Opus integration
+- `references/qwen3-asr-integration.md` — Qwen3-ASR model info, CLI test, performance, and pitfalls
 
----
-
-## Voice Mode (Interactive)
+## CLI Voice Mode
 
 In CLI sessions, enable voice-to-voice mode:
 ```

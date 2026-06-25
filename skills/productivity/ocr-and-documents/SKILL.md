@@ -30,6 +30,32 @@ This handles PDF-to-markdown conversion via Firecrawl with no local dependencies
 
 Only use local extraction when: the file is local, web_extract fails, or you need batch processing.
 
+## Fast Image OCR: PP-OCRv6 helper (recommended for screenshots)
+
+For screenshots, fund/stock app images, chat screenshots, and other image-only OCR, use the local PP-OCRv6 helper when available:
+
+```bash
+~/.hermes/scripts/ocr_image.sh /path/to/image.jpg          # plain text
+~/.hermes/scripts/ocr_image.sh /path/to/image.jpg --json   # text + boxes + scores
+```
+
+Installed pattern (proven on macOS M5):
+
+```bash
+BASE="$HOME/.hermes/ocr_ppocrv6"
+python3 -m venv "$BASE/venv"
+source "$BASE/venv/bin/activate"
+pip install -U pip setuptools wheel
+pip install 'paddleocr>=3.7.0' paddlepaddle
+```
+
+Implementation files:
+- `~/.hermes/ocr_ppocrv6/ocr_image.py` — Python wrapper around PaddleOCR 3.x / PP-OCRv6
+- `~/.hermes/scripts/ocr_image.sh` — Hermes-facing shell entrypoint
+- models cache in `~/.paddlex/official_models/` (first run downloads PP-OCRv6_medium_det/rec and orientation model)
+
+Performance note: first run includes model downloads (~47s observed). Warm run with medium model through Python wrapper was ~6s on a chat screenshot. For sub-100ms browser-style OCR, use Tiny + ONNX/WebGPU/daemon mode; the Python helper prioritizes accuracy and simple Hermes integration.
+
 ## Step 2: Choose Local Extractor
 
 | Feature | pymupdf (~25MB) | marker-pdf (~3-5GB) |

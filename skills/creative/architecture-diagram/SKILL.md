@@ -39,9 +39,13 @@ Based on [Cocoon AI's architecture-diagram-generator](https://github.com/Cocoon-
 ## Workflow
 
 1. User describes their system architecture (components, connections, technologies)
-2. Generate the HTML file following the design system below
-3. Save with `write_file` to a `.html` file (e.g. `~/architecture-diagram.html`)
-4. User opens in any browser — works offline, no dependencies
+2. Clarify whether they need a rendered preview only or an editable source file too. For network/topology diagrams, default to producing an editable `.drawio` source plus a PNG/SVG preview unless they say otherwise.
+3. Generate the HTML/SVG/draw.io file following the design system below
+4. Save with `write_file` to a user-visible path (e.g. `~/Desktop/[name].drawio` and/or `~/Desktop/[name].png`)
+5. Verify files exist and XML parses for `.drawio`/`.svg`
+6. User opens in browser or diagrams.net — works offline, no dependencies
+
+For editable topology deliverables, see `references/editable-diagrams.md`.
 
 ### Output Location
 
@@ -49,6 +53,10 @@ Save diagrams to a user-specified path, or default to the current working direct
 ```
 ./[project-name]-architecture.html
 ```
+
+### Editable exports
+
+When the user is designing or reviewing a topology/architecture diagram, assume they may need to edit it later. In addition to a preview PNG/HTML, provide an editable source format such as `.drawio` (diagrams.net) and/or `.svg`. See `references/editable-diagram-exports.md` for the draw.io XML pattern and user-facing editing tips.
 
 ### Preview
 
