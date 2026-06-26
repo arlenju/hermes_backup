@@ -269,6 +269,93 @@ If `pip` is missing from the venv, reinstall it:
 ~/My_Project/hermes_agent/Hermes-Agent/venv/bin/python -m ensurepip --upgrade
 ```
 
+### `uv pip install` as fallback when venv pip is broken or missing
+
+If `~/.hermes/hermes-agent/venv/bin/python -m pip install <pkg>` fails (ModuleNotFoundError: No module named 'pip'), use `uv` instead — it manages packages into any venv without needing pip inside it:
+
+```bash
+# Install a package into the Hermes runtime venv using uv
+uv pip install --python ~/.hermes/hermes-agent/venv/bin/python faster-whisper
+
+# Or activate the venv first, then use uv without --python
+source ~/.hermes/hermes-agent/venv/bin/activate
+uv pip install faster-whisper
+```
+
+`uv` is pre-installed on this machine at `/opt/homebrew/bin/uv` and handles dependency resolution faster than pip. This is the preferred fallback when pip itself is broken.
+
+### STT provider silently broken — always test before assuming it works
+
+The config may show `stt.provider: qwen3_asr` with a command provider pointing to `~/.hermes/scripts/mlx_asr.sh`, but the underlying `mlx_audio` Python module may be missing from the venv. The script fails silently (stderr suppressed with `2>/dev/null`) and Hermes reports "transcription failed" with no useful diagnostic.
+
+**Diagnostic sequence when STT fails:**
+1. Check what provider is configured: `grep -A5 'stt:' ~/.hermes/config.yaml`
+2. If command provider, run the script directly with a test audio file and WITHOUT stderr suppression to see the real error:
+   ```bash
+   # Convert incoming audio to wav first if needed
+   ffmpeg -i /path/to/audio.ogg /tmp/asr_input.wav -y
+   # Run the ASR script directly, showing all errors
+   bash ~/.hermes/scripts/mlx_asr.sh /tmp/asr_input.wav
+   ```
+3. If `ModuleNotFoundError: No module named 'mlx_audio'`, install it:
+   ```bash
+   source ~/.hermes/hermes-agent/venv/bin/activate
+   uv pip install mlx-audio
+   ```
+4. If the module can't be installed quickly, fall back to `faster-whisper`:
+   ```bash
+   uv pip install --python ~/.hermes/hermes-agent/venv/bin/python faster-whisper
+   hermes config set stt.provider local
+   ```
+5. **If faster-whisper is ALSO missing** (common after venv rebuilds or fresh installs), install it first before it can serve as fallback:
+   ```bash
+   # Check if faster-whisper is actually installed
+   ~/.hermes/hermes-agent/venv/bin/python -c "import faster_whisper; print('OK')"
+   # If ModuleNotFoundError, install it:
+   uv pip install --python ~/.hermes/hermes-agent/venv/bin/python faster-whisper
+   # Also check mlx_whisper and whisper as alternatives:
+   ~/.hermes/hermes-agent/venv/bin/python -c "import mlx_whisper" 2>&1
+   ~/.hermes/hermes-agent/venv/bin/python -c "import whisper" 2>&1
+   ```
+6. **Last-resort: install into system Python** and run directly (bypasses Hermes STT config entirely):
+   ```bash
+   uv pip install faster-whisper  # installs into system python3
+   # Convert incoming audio to wav first
+   ffmpeg -i /path/to/audio.ogg /tmp/asr_input.wav -y
+   # Run directly
+   python3 -c "
+   from faster_whisper import WhisperModel
+   model = WhisperModel('base')
+   segments, info = model.transcribe('/tmp/asr_input.wav', language='zh')
+   print(''.join(s.text for s in segments))
+   "
+   ```
+   This is useful when you need to transcribe one audio file immediately without reconfiguring the full STT pipeline.
+
+   **Audio format conversion first:** Incoming voice messages from Feishu/WeChat are often OGG Opus format. Always convert to WAV before feeding to any ASR engine:
+   ```bash
+   ffmpeg -i /path/to/audio.ogg /tmp/asr_input.wav -y
+   ```
+   OGG Opus → WAV conversion is instant and lossless. Most ASR engines (faster-whisper, mlx_audio, Qwen3-ASR) expect WAV input, not raw OGG.
+
+   **ASR output quality check:** After transcription, always do a sanity check on the output. ASR may mishear proper nouns — "WorkBuddy" might become "Workbody", "Hermes" might become "Harnis", "DeepSeek" might become "Deep Seak". When the transcription contains product names or technical terms, verify with a quick web_search before using the transcript as the basis for research or reports. This is not optional — a misheard product name in a research report looks unprofessional.
+
+   **Proven fallback chain when STT is broken (this session):** When `mlx_audio` is missing from the venv and `faster-whisper` is also missing, the fastest recovery is:
+   ```bash
+   # 1. Convert incoming audio to WAV
+   ffmpeg -i /path/to/audio.ogg /tmp/asr_input.wav -y
+   # 2. Install faster-whisper into SYSTEM Python (not venv — faster, no venv activation needed)
+   uv pip install --system faster-whisper
+   # 3. Run directly with system python3
+   python3 -c "
+   from faster_whisper import WhisperModel
+   model = WhisperModel('base')
+   segments, info = model.transcribe('/tmp/asr_input.wav', language='zh')
+   print(''.join(s.text for s in segments))
+   "
+   ```
+   This bypasses the Hermes STT config entirely and gets transcription working in under 2 minutes. The model downloads on first use (~140MB, ~30s).
+
 ### Check existing config before setting
 
 STT/TTS may already be configured. Inspect first:

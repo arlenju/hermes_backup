@@ -1,7 +1,7 @@
 ---
 name: ocr-and-documents
-description: "Extract text from PDFs/scans (pymupdf, marker-pdf)."
-version: 2.3.0
+description: "Extract text from PDFs/scans (pymupdf, marker-pdf). Generate PDFs from HTML/Markdown via Chrome headless. Generate DOCX via python-docx."
+version: 2.5.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -187,6 +187,167 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 
 ---
 
+## PDF Generation (HTML/Markdown → PDF)
+
+When the user asks to "转成PDF" / "convert to PDF" / "export as PDF", the most reliable path on macOS is **Chrome headless**.
+
+### ✅ Chrome Headless (recommended — handles CJK perfectly)
+
+```bash
+# 1. Write content as HTML to a temp file (see markdown→HTML conversion below)
+# 2. Use Chrome to render HTML → PDF
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless \
+  --disable-gpu \
+  --no-sandbox \
+  --print-to-pdf="/path/to/output.pdf" \
+  --print-to-pdf-no-header \
+  "/tmp/input.html"
+```
+
+**Why this works:** Chrome's rendering engine handles CJK fonts, tables, CSS styling, and multi-page layout natively. Output quality is identical to Chrome's "Print to PDF" in the browser. No Python dependencies needed.
+
+**CSS tip:** Use `@page { margin: 2cm; }` in the HTML `<style>` to control page margins. PingFang SC / Heiti SC are available system fonts for Chinese.
+
+### Markdown → HTML → PDF conversion
+
+For generating a PDF from Markdown content, first convert MD to styled HTML with Python, then use Chrome headless:
+
+```python
+import html
+# Simple MD→HTML: handle # headings, | tables |, - lists, **bold**, `code`, ---
+# Write to /tmp/report.html with a <style> block for fonts/margins/tables
+# Then call Chrome headless on the HTML file
+```
+
+A working pattern: write a Python script to `/tmp/md_to_pdf.py` that reads the `.md` file, converts to HTML with basic styling (font-family: "PingFang SC", table borders, h1/h2/h3), saves HTML, then `subprocess.run` Chrome headless.
+
+### ❌ Methods that DON'T work well (pitfalls)
+
+| Method | Problem |
+|--------|---------|
+| `cupsfilter -i text/html -m application/pdf` | Returns "无滤镜可从text/html转换成application/pdf" — no HTML filter on macOS |
+| `textutil` | Only converts between txt/html/rtf/doc — cannot output PDF |
+| `fpdf2` (Python) | `FPDFException: Not enough horizontal space to render a single character` with CJK text, even with TTF font registration. Table rendering also fails. |
+| `docx2pdf` (Python) | Requires Microsoft Word installed; not available on this machine |
+| `reportlab` | Heavy dependency, CJK font registration is complex |
+
+### DOCX Generation (python-docx)
+
+For generating Word documents (when user wants .docx not .pdf):
+
+```bash
+# Install into system Python (not venv — python-docx is pure Python, no conflicts)
+uv pip install --system python-docx
+```
+
+**Reusable script:** `scripts/md_to_docx.py` — a proven Markdown→DOCX converter that handles headings, tables (with bold header row + Table Grid style), bullet/numbered lists, code blocks (Courier New 9pt), `**bold**` inline formatting, and `---` horizontal rules. Used across multiple sessions for generating research reports as Word documents.
+
+```bash
+python3 scripts/md_to_docx.py /tmp/report.md /Users/jushuai/Desktop/report.docx
+```
+
+The script auto-verifies output by reopening the docx and printing paragraph/table counts.
+
+**Manual pattern** (if you need custom formatting beyond the script):
+
+```python
+from docx import Document
+from docx.shared import Pt, Cm
+doc = Document()
+for section in doc.sections:
+    section.top_margin = Cm(2.5)
+    section.left_margin = Cm(2.5)
+doc.add_heading('Title', 0)
+doc.add_paragraph('Content...')
+# Tables: table = doc.add_table(rows=N, cols=M); table.style = 'Table Grid'
+# Bold header: for run in cell.paragraphs[0].runs: run.bold = True
+doc.save('/path/to/output.docx')
+```
+
+**Pitfall:** `python-docx` is NOT in the Hermes venv by default. Install to system Python: `uv pip install --system python-docx`. Do NOT try `pip install` — pip may not exist as a standalone command.
+
+### MD → DOCX reusable script
+
+A proven conversion script is at `scripts/md_to_docx.py`. It handles:
+- H1–H4 headings, bold (`**text**`), inline code
+- Markdown tables (with bold header row, Table Grid style, 10pt font)
+- Bulleted lists, nested bullets, numbered lists
+- Code blocks (Courier New 9pt, indented)
+- Horizontal rules, page margins (2.5cm)
+
+```bash
+# Usage: write report to /tmp/report.md, then:
+python3 scripts/md_to_docx.py /tmp/report.md /Users/jushuai/Desktop/Report.docx
+```
+
+This script was proven across 3+ sessions generating research reports, meeting minutes, and technical documents. It avoids the common pitfalls of fpdf2 (CJK rendering failures) and cupsfilter (no HTML filter on macOS).
+
+### DOCX → PDF (when user already has a .docx)
+
+If the user has a DOCX and wants PDF, and Chrome is available:
+1. Use `python-docx` to read the DOCX content
+2. Convert to styled HTML
+3. Use Chrome headless to render HTML → PDF
+
+This is more reliable than trying to find a direct DOCX→PDF converter on macOS without LibreOffice or Word installed.
+
+### Douyin (抖音) video content extraction
+
+When a user shares a `v.douyin.com` short link and asks to research/analyze the content, use the browser + JavaScript console technique documented in `references/douyin-video-extraction.md`. This reliably extracts video titles, chapter summaries, author info, and comments without needing to play the video.
+
+### X/Twitter post extraction
+
+The same browser + console technique works for X/Twitter posts (`x.com/i/status/<id>`). Navigate to the URL, then use `browser_console` to extract `document.body.innerText` — the full post text, engagement counts, and embedded links are all in the text. See `references/douyin-video-extraction.md` for the X/Twitter variant.
+
+### Research report generation from video/social media content
+
+When a user shares a Douyin/X link and asks for a research report ("研究一下", "做个报告"), the proven end-to-end workflow is: extract content → web_search for background → synthesize into structured Markdown report → convert to DOCX via `scripts/md_to_docx.py` or PDF via Chrome headless → deliver via `MEDIA:`. This was proven across 4+ reports in a single session.
+
+---
+
+## CHM → PDF Conversion
+
+CHM (Compiled HTML Help) files are common for Chinese vendor documentation (Huawei, etc.). They are essentially LZX-compressed CAB containers with HTML pages, images, and an HHC table-of-contents file.
+
+### Tools needed
+
+```bash
+brew install sevenzip    # 7zz — extracts CHM contents (chmlib only gets internal structure files)
+pip install pypdf        # PDF merging
+# Chrome headless — already used for HTML→PDF above
+```
+
+### Workflow (proven on 265MB CHM → 180MB / 21,062-page PDF)
+
+1. **Extract CHM with 7z** — `7zz x file.chm -o/tmp/chm_content -y`
+   - Produces HTML files (GB2312 encoded), images, CSS, and a `.hhc` TOC file
+   - Some internal files (#URLSTR, #STRINGS) may error — ignore, HTML content extracts fine
+2. **Parse HHC** — GB2312-encoded XML-like file with `<OBJECT type="text/sitemap">` blocks containing `Name` (title) and `Local` (filename) params. Parse with regex to get ordered `(title, filename)` pairs.
+3. **Batch convert** — For large docs (10,000+ pages), split into batches of ~300 pages:
+   - Build one HTML file per batch with CSS `@page` styling and `page-break-before: always` per section
+   - Convert each batch with Chrome headless (see "PDF Generation" section above)
+   - **Do NOT try to convert a single 148MB HTML file** — Chrome hangs. Batching is essential.
+4. **Merge PDFs** — Use `pypdf.PdfWriter().append()` to combine all batch PDFs into one.
+
+### Encoding handling
+
+CHM HTML files are typically GB2312. Read as bytes, decode with `gb2312` → fallback `gbk` → fallback `utf-8`. Replace `charset=gb2312` with `charset=utf-8` in the meta tag before re-rendering.
+
+### Feishu (Lark) attachment download
+
+To download a file attached to a Feishu message:
+1. Get `tenant_access_token` via `POST /open-apis/auth/v3/tenant_access_token/internal` with `app_id` + `app_secret` (from `~/.hermes/.env`)
+2. Get message content via `GET /open-apis/im/v1/messages/{message_id}` → parse JSON body for `file_key` and `file_name`
+3. Download via `GET /open-apis/im/v1/messages/{message_id}/resources/{file_key}?type=file`
+4. **Large file pitfall**: If the API returns `code: 234037` ("Downloaded file size exceeds limit"), use HTTP `Range` headers to download in 5MB chunks and concatenate. This works even when the single-request download is rejected.
+
+See `references/chm-to-pdf.md` for the full conversion script and Feishu download details.
+
+For direct use, run `scripts/chm_to_pdf.py <input.chm> <output.pdf>` — it handles extraction, batching, Chrome conversion, and merging end-to-end.
+
+---
+
 ## Notes
 
 - `web_extract` is always first choice for URLs
@@ -196,3 +357,4 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 - marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
 - For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
 - For PowerPoint: see the `powerpoint` skill (uses python-pptx)
+- For PDF generation: use Chrome headless (see "PDF Generation" section above)

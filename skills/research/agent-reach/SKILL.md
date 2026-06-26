@@ -133,3 +133,29 @@ agent-reach doctor --json
 https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 
 用户只需提供 cookies，其他配置由 agent 完成。
+
+## 抖音（Douyin）视频内容提取
+
+抖音短链接（`v.douyin.com/xxxxx`）会 302 跳转到完整 URL（如 `www.douyin.com/video/7641...`）。web_extract 和 jina reader 均无法提取抖音页面内容（被反爬或需要登录态）。需要用浏览器提取：
+
+### 步骤
+
+1. **用 browser_navigate 打开短链接**，浏览器会自动跟随 302 跳转到完整视频页。
+2. **等待页面加载**（scroll 触发懒加载），然后用 `browser_console` 执行 JS 提取内容：
+   ```javascript
+   // 提取页面标题、meta描述、所有可见文本（含AI生成的章节摘要和评论）
+   JSON.stringify({
+     title: document.title,
+     meta: document.querySelector('meta[name=description]')?.content || '',
+     all_text: document.body.innerText
+   })
+   ```
+3. **all_text 中包含**：视频标题、AI生成的「章节要点」摘要（含时间戳）、完整评论、发布时间、作者信息、推荐视频标题。这些足以理解视频内容用于研究报告。
+4. **关键词搜索补充**：用 `web_search` 搜索视频标题/关键词 + 相关新闻/数据，补充背景信息。
+
+### 注意事项
+
+- 抖音页面需要时间加载视频元数据，首次 snapshot 可能显示"视频数据加载中"。scroll 一次后再提取。
+- 浏览器中视频是静音的（"因浏览器限制，当前为静音"），不影响文本提取。
+- 不需要登录即可看到视频描述、章节摘要和评论。
+- 抖音的 AI 章节摘要（"章节要点"）质量较高，包含时间戳和要点提炼，是理解长视频内容的高效途径。

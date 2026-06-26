@@ -53,6 +53,38 @@ Always read enough to see:
 - Active maintenance (last commit, release cadence)
 - Feature list (the actual capabilities, not the marketing)
 
+### 1b. Batch evaluation (list of N tools)
+
+When the user shares a link to a *listicle* or "top 10 tools" article, the
+workflow shifts from single-tool fit-decision to **incremental gap analysis**:
+
+1. Extract the full list (browser_console JS extraction is often needed —
+   these articles truncate in snapshot).
+2. For EACH item, check if the user already has an equivalent skill/tool:
+   - `skills_list` + `skill_view` for existing coverage
+   - Mark each as: ✅ already have / ❌ not relevant / 🟡 worth considering /
+     ⚠️ heavy overlap
+3. Output a single comparison table — not 10 separate evaluations.
+4. Recommend installing **only 2-3** items that provide genuine incremental
+   value. Explicitly say why the rest are skipped (overlap / not relevant).
+
+The user does NOT want 10 install commands. They want to know "which 2 of
+these 10 are worth my time given what I already have."
+
+### 1c. Blocked-URL extraction
+
+Some domains are blocked by `web_extract` (e.g. `douyin.com` short links,
+`x.com` status pages, some `segmentfault.com` articles). When this happens:
+
+1. Use `web_search` with key phrases from the shared text to find the same
+   content mirrored on other platforms (segmentfault, zhihu, YouTube, X, Reddit).
+2. If the mirror is also blocked, use `browser_navigate` + `browser_console`
+   with `document.querySelector('article')?.innerText` to extract full text
+   client-side. Articles that truncate in the accessibility snapshot often
+   extract cleanly via JS.
+3. Never give up after one blocked URL — the content almost always exists
+   in multiple places.
+
 ### 2. Compare against the user's actual setup
 
 This is the differentiator. Before writing a verdict:
@@ -159,6 +191,12 @@ SaaS pattern). User happy.
 **addy/agent-skills** (well-received): identified 4 unique skills the user
 didn't have (doubt-driven, source-driven, observability, security-and-hardening)
 and built install command around just those.
+
+**Codex top-10 skills listicle** (well-received): user shared a douyin link →
+web_extract blocked → web_search found segmentfault mirror → browser extracted
+full article via JS. Output was a single 10-row table with "你已有？/ 有用吗 /
+说明" columns, then recommended only 2 of 10 for install (mcp-builder +
+academic-research), with explicit "已有等效替代" notes for the rest.
 
 The common thread: **the response is shaped by what the user already has**, not
 by what the tool offers.

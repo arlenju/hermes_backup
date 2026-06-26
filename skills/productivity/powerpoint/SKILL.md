@@ -9,7 +9,11 @@ platforms: [linux, macos, windows]
 
 ## When to use
 
-Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files; working with templates, layouts, speaker notes, or comments. Trigger whenever the user mentions "deck," "slides," "presentation," or references a .pptx filename, regardless of what they plan to do with the content afterward. If a .pptx file needs to be opened, created, or touched, use this skill.
+Use this skill any time a `.pptx` file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any `.pptx` file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files with templates, layouts, speaker notes, or comments. Trigger whenever the user mentions "deck," "slides," "presentation," or references a `.pptx` filename, regardless of what they plan to do with the content afterward. If a `.pptx` needs to be opened, created, or touched, use this skill.
+
+### Alternative: ppt-master skill for AI-driven deck generation
+
+When the user wants to generate a high-quality presentation from a source document (PDF/DOCX/URL/Markdown) with designer-level aesthetics, the `ppt-master` skill (installed at `~/.hermes/skills/productivity/ppt-master/`) is the better choice. It uses a multi-role pipeline (Strategist → Image_Generator → Executor) to produce natively editable PPTX with real PowerPoint shapes, speaker notes, and optional audio narration. The built-in `powerpoint` skill above is better for programmatic editing/reading of existing .pptx files; `ppt-master` is better for generating new decks from scratch with high visual quality.
 
 ## Quick Reference
 

@@ -32,3 +32,18 @@ If the user opens the file in diagrams.net and cannot edit individual objects, t
 ## Pitfall
 
 Do not only deliver a raster PNG when the user is designing topology. PNG is useful for preview, but network diagrams usually need later edits, so pair it with `.drawio` or another editable vector/source format.
+
+### Feishu delivery of .drawio / .excalidraw files
+
+When sending via Feishu `MEDIA:` protocol, `.drawio` and `.excalidraw` files are silently dropped. Always bundle or rename:
+
+```bash
+# Zip them
+zip -9 topology_editable.zip topology.drawio topology.excalidraw
+
+# Or rename to .txt
+cp topology.drawio topology_drawio.txt
+cp topology.excalidraw topology_excalidraw.txt
+```
+
+Then send via `MEDIA:`, and tell the user to rename back (remove `.txt`) after downloading.

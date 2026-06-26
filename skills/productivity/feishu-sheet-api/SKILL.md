@@ -664,6 +664,8 @@ folder_token = folder_url.split('/folder/')[1]
 
 For Feishu Wiki links and “润色/不要有 AI 味” requests, see `references/feishu-wiki-doc-humanizing.md`: resolve wiki node → docx `obj_token`, prefer `raw_content`, then rewrite in plain internal-business language without AI-sounding transitions.
 
+For uploaded meeting-minutes DOCX + Feishu Wiki source requests, see `references/feishu-meeting-minutes-from-wiki.md`: preserve the memo header/numbering, remove unrelated template residue, fill requested sections from Wiki raw content, and write review conclusions plainly (e.g. “宋总评审通过”).
+
 ## Feishu Drive / Wiki / Doc API
 
 For listing folders, downloading files, and exporting documents from Feishu Drive (云盘), see `references/feishu-drive-api.md`. The Drive API requires `drive:drive:readonly` scope (separate from sheets scopes) and often needs admin approval.
@@ -744,3 +746,26 @@ This skill absorbed `feishu-api` (2026-06-13). The absorbed skill's unique refer
 - **Read only the data range, not the full sheet.** A sheet may have 456K+ total rows but only 10K with actual data. Always determine the data range first (e.g., by checking column A for non-empty cells).
 - **Drive API (`drive:drive:readonly`) requires admin approval** in most Feishu tenants — it's not just a scope toggle. Don't assume it's available.
 - **URL parsing for sheet tokens:** Extract `spreadsheet_token` from `/sheets/<TOKEN>` in the URL, and `sheet_id` from the `?sheet=<SHEET_ID>` query parameter. For folder URLs, extract the folder token from `/folder/<TOKEN>`.
+
+### ⚠️ Feishu MEDIA 文件发送扩展名限制
+
+通过 `MEDIA:/path/file` 在飞书发送文件时，部分扩展名会被拒绝或静默丢失。已验证：
+- `.html` → ✅ 成功送达
+- `.zip` → ✅ 成功送达
+- `.txt` → ✅ 成功送达
+- `.drawio` → ❌ 静默丢失，收不到
+- `.excalidraw` → ❌ 静默丢失，收不到
+
+**解决方法：** 不支持的扩展名先打包成 `.zip`，或重命名为 `.txt` 并在消息中说明如何改回原名。示例：
+
+```bash
+# 方法1：zip 打包
+zip -9 filename.zip file.drawio file.excalidraw
+MEDIA:/path/to/filename.zip
+
+# 方法2：重命名为 .txt
+cp file.drawio file.txt
+cp file.excalidraw file_excalidraw.txt
+MEDIA:/path/to/file.txt
+MEDIA:/path/to/file_excalidraw.txt
+```

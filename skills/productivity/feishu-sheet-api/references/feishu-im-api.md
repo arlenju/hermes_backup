@@ -14,7 +14,8 @@ Use this when creating a Feishu group, adding approved users/colleagues, sending
 ## Practical notes
 - Pairing IDs like `14b3e8ga` and `d93272ec` are Feishu `user_id` values. Convert them to `open_id` with `contact/v3/users/{user_id}?user_id_type=user_id` before adding to chats.
 - The bot's own `open_id` comes from `/bot/v3/info`.
-- Creating a group with the bot app may put the bot in the group automatically. Adding the bot again via the members API can return HTTP 400. Add human members first; verify bot presence through actual message send or chat info.
+- **Creating a group:** The bot owns the group and is automatically present. Do NOT add the bot as a member via the members API—it returns HTTP 400.
+- **Member add scope:** Only add human members (by open_id). The chat owner (admin) is already in the group after creation, no need to add them.
 - For `im/v1/chats` group creation, a working body shape is:
 
 ```json
@@ -30,11 +31,13 @@ Use this when creating a Feishu group, adding approved users/colleagues, sending
 }
 ```
 
-- Add members body:
+- Add members body (omit bot and admin):
 
 ```json
-{"id_list": ["<open_id_1>", "<open_id_2>"], "id_type": "open_id"}
+{"id_list": ["<colleague_1_open_id>", "<colleague_2_open_id>"], "id_type": "open_id"}
 ```
+
+- **Welcome card:** After creating the group and adding members, send an interactive card as a welcome message. Use `header.template = "blue"`, describe the bot's capabilities, list members.
 
 ## Urgent alert simulation card
 Use an interactive card with `header.template = "red"`, explicit `[演练]` wording, and a note saying it is not a real incident. This gives the user the notification/card experience without causing real operational confusion.
